@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EmailTags</title>
+  <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+  <script src="config.js"></script>
+  <script src="engine.js"></script>
+  <script src="outlook.js"></script>
+  <style>
+    :root {
+      --bg: #ffffff; --panel: #f6f7f9; --line: #e3e5e8; --text: #1b1d21; --muted: #5f6570;
+      --accent: #0f6cbd; --accent-2: #e8f1fb; --ok: #107c10; --warn: #b75b00; --chip: #eef0f3;
+      --radius: 8px; --shadow: 0 1px 2px rgba(0,0,0,.06);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #1f1f1f; --panel: #292929; --line: #3a3a3a; --text: #f1f1f1; --muted: #a8adb4;
+              --accent: #4aa3ff; --accent-2: #17324d; --chip: #333; --ok: #54b054; --warn: #f0a24b; }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 13px/1.4 "Segoe UI", system-ui, sans-serif; background: var(--bg); color: var(--text); }
+    header { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--bg); z-index: 3; }
+    header b { font-size: 14px; }
+    .mode { margin-left: auto; font-size: 11px; padding: 2px 8px; border-radius: 99px; background: var(--chip); color: var(--muted); }
+    main { padding: 12px; display: grid; gap: 12px; }
+    .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; box-shadow: var(--shadow); }
+    .row { display: flex; align-items: center; gap: 8px; }
+    .label { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); font-weight: 600; }
+    .conf { margin-left: auto; font-weight: 600; font-size: 12px; }
+    .bar { height: 4px; background: var(--line); border-radius: 4px; overflow: hidden; margin-top: 6px; }
+    .bar i { display: block; height: 100%; background: var(--accent); width: 0; transition: width .3s; }
+    .folder-big { font-size: 15px; font-weight: 600; margin: 8px 0 6px; word-break: break-word; }
+    .muted { color: var(--muted); font-size: 12px; }
+    .reasons { margin: 6px 0 0; padding-left: 16px; color: var(--muted); font-size: 12px; }
+    .badge { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px; background: var(--accent); color: #fff; }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip { border: 1px solid var(--line); background: var(--bg); color: var(--text); border-radius: 99px; padding: 3px 10px 3px 8px; cursor: pointer; font: inherit; font-size: 12px; display: inline-flex; align-items: center; gap: 6px; }
+    .chip .dot { width: 8px; height: 8px; border-radius: 50%; background: #999; flex: none; }
+    .chip[aria-pressed="true"] { background: var(--accent-2); border-color: var(--accent); font-weight: 600; }
+    .chip.missing { border-style: dashed; }
+    .chip:focus-visible, button:focus-visible, input:focus-visible, .frow:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .group { margin-top: 10px; }
+    .group .label { margin-bottom: 6px; display: block; }
+    input[type=search] { width: 100%; padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--text); font: inherit; }
+    .flist { max-height: 210px; overflow: auto; margin-top: 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); }
+    .frow { padding: 6px 10px; cursor: pointer; display: flex; gap: 6px; align-items: center; border-bottom: 1px solid var(--line); }
+    .frow:last-child { border-bottom: 0; }
+    .frow:hover { background: var(--chip); }
+    .frow[aria-selected="true"] { background: var(--accent-2); font-weight: 600; }
+    .frow .parent { color: var(--muted); font-weight: 400; }
+    .quick { margin-top: 8px; }
+    .opts { display: grid; gap: 6px; margin-top: 4px; }
+    .opts label { display: flex; gap: 8px; align-items: center; cursor: pointer; }
+    .actions { position: sticky; bottom: 0; background: var(--bg); padding: 10px 12px 12px; border-top: 1px solid var(--line); display: grid; gap: 6px; }
+    button.primary { width: 100%; padding: 9px; border: 0; border-radius: 6px; background: var(--accent); color: #fff; font: inherit; font-weight: 600; font-size: 14px; cursor: pointer; }
+    button.primary:disabled { opacity: .55; cursor: default; }
+    .status { min-height: 18px; font-size: 12px; text-align: center; color: var(--muted); }
+    .status.ok { color: var(--ok); } .status.err { color: #c50f1f; }
+    details summary { cursor: pointer; color: var(--muted); font-size: 12px; }
+    .link { background: none; border: 0; color: var(--accent); cursor: pointer; font: inherit; font-size: 12px; padding: 0; }
+    .hidden { display: none !important; }
+    .skeleton { color: var(--muted); padding: 24px 12px; text-align: center; }
+  </style>
+</head>
+<body>
+  <header>
+    <b>🏷️ EmailTags</b>
+    <span class="mode" id="mode">…</span>
+  </header>
+
+  <div id="loading" class="skeleton">Analizando el correo…</div>
+
+  <main id="app" class="hidden">
+    <!-- SUGERENCIA -->
+    <section class="card" id="sugCard" aria-live="polite">
+      <div class="row">
+        <span class="label">Sugerencia</span>
+        <span class="badge hidden" id="directBadge">DIRECTA</span>
+        <span class="conf" id="confTxt">0%</span>
+      </div>
+      <div class="bar"><i id="confBar"></i></div>
+      <div class="folder-big" id="sugFolder">—</div>
+      <div class="chips" id="sugCats"></div>
+      <ul class="reasons" id="reasons"></ul>
+    </section>
+
+    <!-- CARPETA -->
+    <section class="card">
+      <span class="label">Carpeta</span>
+      <div class="chips quick" id="quickFolders"></div>
+      <input type="search" id="fSearch" placeholder="Buscar carpeta…  (tecla /)" style="margin-top:8px" autocomplete="off" />
+      <div class="flist" id="fList" role="listbox" aria-label="Carpetas"></div>
+    </section>
+
+    <!-- CATEGORÍAS -->
+    <section class="card">
+      <span class="label">Categorías</span>
+      <input type="search" id="cSearch" placeholder="Filtrar categorías…" style="margin-top:8px" autocomplete="off" />
+      <div id="catGroups"></div>
+    </section>
+
+    <!-- OPCIONES -->
+    <section class="card">
+      <span class="label">Opciones</span>
+      <div class="opts">
+        <label><input type="checkbox" id="optThread" checked /> Aplicar a todo el hilo (incluye el correo original)</label>
+        <label><input type="checkbox" id="optFlag" /> Marcar para seguimiento</label>
+      </div>
+      <details style="margin-top:10px">
+        <summary>Aprendizaje</summary>
+        <p class="muted" id="learnInfo"></p>
+        <button class="link" id="btnExport">Copiar respaldo</button> ·
+        <button class="link" id="btnReset">Reiniciar aprendizaje</button>
+      </details>
+    </section>
+  </main>
+
+  <div class="actions hidden" id="actions">
+    <button class="primary" id="btnApply">Aplicar sugerencia</button>
+    <div class="status" id="status"></div>
+  </div>
+
+  <script src="taskpane.js"></script>
+</body>
+</html>

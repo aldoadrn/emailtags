@@ -13,7 +13,12 @@
   function status(msg, cls) { var el = $("status"); el.textContent = msg || ""; el.className = "status " + (cls || ""); }
 
   // Nombre canónico según la lista maestra (respeta mayúsculas de Outlook)
+  function isAlias(name) {
+    var n = String(name).toLowerCase();
+    return Object.keys(CFG.aliases || {}).some(function (k) { return k.toLowerCase() === n; });
+  }
   function canon(name) {
+    name = ENG.aliasOf(CFG, name);
     var n = String(name).toLowerCase();
     for (var i = 0; i < S.master.length; i++) if (S.master[i].displayName.toLowerCase() === n) return S.master[i].displayName;
     return name;
@@ -43,7 +48,7 @@
       S.store = OL.loadStore();
       var res = await Promise.all([OL.getContext(), OL.getMaster()]);
       S.ctx = res[0];
-      S.master = (res[1] || []).filter(function (m) { return m.displayName !== CFG.marker; });
+      S.master = (res[1] || []).filter(function (m) { return m.displayName !== CFG.marker && !isAlias(m.displayName); });
       S.sug = ENG.suggest(S.store, S.ctx, CFG);
       // estado inicial = sugerencia
       S.folder = S.sug.folder;
@@ -53,11 +58,11 @@
       // en modo lectura, si el correo ya tiene la decisión aplicada, respétala
       if (S.ctx.mode === "compose") {
         var prev = await OL.readDecision().catch(function () { return null; });
-        if (prev) { S.folder = prev.k || S.folder; S.cats = {}; (prev.c || []).forEach(function (c) { S.cats[c] = true; }); }
+        if (prev) { S.folder = prev.k || S.folder; S.cats = {}; (prev.c || []).forEach(function (c) { S.cats[canon(c)] = true; }); }
       }
       $("mode").textContent = S.ctx.mode === "compose" ? "✉️ Enviando" : "📥 Recibido";
       $("optThread").checked = true;
-      $("optFlag").checked = S.ctx.mode === "read" && !!S.cats["ToDo"];
+      $("optFlag").checked = S.ctx.mode === "read" && Object.keys(S.cats).some(function (k) { return S.cats[k] && k.toLowerCase() === "to-do"; });
       render();
       $("loading").classList.add("hidden"); $("app").classList.remove("hidden"); $("actions").classList.remove("hidden");
       $("btnApply").focus();

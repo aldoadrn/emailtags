@@ -56,11 +56,24 @@
     // ---------------------------------------------------------------------
     groups: [
       { name: "Cliente",   exclusive: false, items: ["ClaroVideo", "Telcel"] },
-      { name: "Proyecto",  exclusive: false, items: ["AMSTesting", "AI", "SWF", "IncidentesN3", "Observabilidad", "Insumos", "ReleaseManagement", "Launcher", "Dash", "Recomendador"] },
-      { name: "Tipo",      exclusive: false, items: ["Proyecto", "Operacion", "Incidente", "Presupuesto", "Contrato", "Cambio", "Requerimiento"] },
-      { name: "Estado",    exclusive: true,  items: ["ToDo", "InProgress", "Waiting", "Blocked", "Review", "Closed"] },
+      { name: "Proyecto",  exclusive: false, items: ["AMS Pruebas", "AI", "SWF", "Incidentes N3", "Observabilidad", "Insumos", "ReleaseManagement", "Launcher", "Dash", "Recomendador"] },
+      { name: "Tipo",      exclusive: false, items: ["Proyecto", "operación", "Incidente", "Presupuesto", "Contrato", "Cambio", "Requerimiento", "agreements", "corpo", "support", "training"] },
+      { name: "Estado",    exclusive: true,  items: ["to-do", "in progress", "Waiting", "Blocked", "Review", "Closed"] },
       { name: "Prioridad", exclusive: true,  items: ["Urgente", "Alta", "Media", "Baja"] }
     ],
+
+    // ---------------------------------------------------------------------
+    // NOMBRES VIEJOS -> NOMBRE CORRECTO. El panel nunca los muestra, el
+    // historial aprendido con el nombre viejo se suma al correcto, y al
+    // clasificar un correo que traiga el viejo se le cambia por el correcto.
+    // ---------------------------------------------------------------------
+    aliases: {
+      "AMSTesting":   "AMS Pruebas",
+      "IncidentesN3": "Incidentes N3",
+      "Operacion":    "operación",
+      "ToDo":         "to-do",
+      "InProgress":   "in progress"
+    },
 
     // ---------------------------------------------------------------------
     // REGLAS SEMILLA: arrancan el motor mientras aprende de ti.
@@ -73,8 +86,8 @@
       { re: "@amco\\.mx|@clarovideo",                    cats: ["ClaroVideo"] },
       { re: "insumo|sisap|folio",                        cats: ["Insumos", "Telcel"] },
       { re: "\\bswf\\b",                                 cats: ["SWF", "Telcel"] },
-      { re: "\\bams\\b|pruebas|testing|\\bqa\\b|defecto", folder: "P2", cats: ["AMSTesting"] },
-      { re: "incidente|\\bn3\\b|\\bsev ?[12]\\b|ca[ií]da", folder: "P3", cats: ["IncidentesN3", "Incidente"] },
+      { re: "\\bams\\b|pruebas|testing|\\bqa\\b|defecto", folder: "P2", cats: ["AMS Pruebas"] },
+      { re: "incidente|\\bn3\\b|\\bsev ?[12]\\b|ca[ií]da", folder: "P3", cats: ["Incidentes N3", "Incidente"] },
       { re: "\\bia\\b|\\bai\\b|copilot|claude|\\bllm|agente|genai", folder: "P1", cats: ["AI"] },
       { re: "propuesta|cotizaci",                        folder: "C3", cats: ["Proyecto"] },
       { re: "contrato|anexo|addendum|firma",             folder: "C1", cats: ["Contrato"] },
@@ -91,7 +104,7 @@
       { re: "aprobaci|autoriza|vo\\.? ?bo|visto bueno|valida", cats: ["Review"] },
       { re: "bloquead|bloqueo|impedimento",              cats: ["Blocked"] },
       { re: "urgente|asap|cr[ií]tico|inmediat",          cats: ["Urgente"] },
-      { re: "favor de|podr[ií]as|necesito|requiero|me apoyas|\\?", cats: ["ToDo"] }
+      { re: "favor de|podr[ií]as|necesito|requiero|me apoyas|\\?", cats: ["to-do"] }
     ]
   };
 

@@ -45,7 +45,7 @@ async function inheritIfKnown(CFG, ENG, OL) {
   var store = OL.loadStore();
   var th = store.t[ENG.hash(conv)];
   if (!th) return false;
-  await OL.writeDecision({ f: th.f, c: th.c || [], thread: true, flag: false });
+  await OL.writeDecision({ f: th.f, c: (th.c || []).map(function (c) { return ENG.aliasOf(CFG, c); }), thread: true, flag: false });
   await OL.p(function (cb) { it.saveAsync(cb); }).catch(function () {});
   return true;
 }

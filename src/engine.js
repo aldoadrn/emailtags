@@ -46,6 +46,12 @@
     for (var k in src) if (Object.prototype.hasOwnProperty.call(src, k)) bump(target, k, src[k] * mult);
   }
 
+  function aliasOf(cfg, cat) {
+    var al = cfg.aliases || {}, c = String(cat).toLowerCase();
+    for (var k in al) if (Object.prototype.hasOwnProperty.call(al, k) && k.toLowerCase() === c) return al[k];
+    return cat;
+  }
+
   function groupOf(cfg, cat) {
     var c = String(cat).toLowerCase();
     for (var i = 0; i < cfg.groups.length; i++) {
@@ -69,7 +75,7 @@
     var th = ctx.conv ? store.t[hash(ctx.conv)] : null;
     if (th) {
       return {
-        folder: th.f, confidence: 99, alternatives: [], cats: (th.c || []).slice(),
+        folder: th.f, confidence: 99, alternatives: [], cats: (th.c || []).map(function (c) { return aliasOf(cfg, c); }),
         reasons: ["Hilo ya clasificado: se heredan carpeta y categorías"], direct: true, fromThread: true
       };
     }
@@ -136,6 +142,11 @@
     var direct = topCount > 10 && share >= 0.75;
     if (direct) confidence = Math.max(confidence, 90);
 
+    // Nombres viejos -> nombre correcto (suma su historial)
+    var C2 = {};
+    Object.keys(C).forEach(function (k) { bump(C2, aliasOf(cfg, k), C[k]); });
+    C = C2;
+
     // Categorías (respetando grupos exclusivos)
     var cats = [];
     var byGroup = {};
@@ -198,7 +209,7 @@
     return store;
   }
 
-  var Engine = { emptyStore: emptyStore, hash: hash, tokens: tokens, domainOf: domainOf, suggest: suggest, learn: learn, prune: prune, groupOf: groupOf };
+  var Engine = { emptyStore: emptyStore, hash: hash, tokens: tokens, domainOf: domainOf, suggest: suggest, learn: learn, prune: prune, groupOf: groupOf, aliasOf: aliasOf };
   root.ET_ENGINE = Engine;
   if (typeof module !== "undefined") module.exports = Engine;
 })(typeof window !== "undefined" ? window : globalThis);

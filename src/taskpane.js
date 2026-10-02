@@ -48,7 +48,7 @@
       S.store = OL.loadStore();
       var res = await Promise.all([OL.getContext(), OL.getMaster()]);
       S.ctx = res[0];
-      S.master = (res[1] || []).filter(function (m) { return m.displayName !== CFG.marker && !isAlias(m.displayName); });
+      S.master = (res[1] || []).filter(function (m) { return m.displayName !== CFG.marker && !isAlias(m.displayName) && !(CFG.moveTagPrefix && m.displayName.indexOf(CFG.moveTagPrefix) === 0); });
       S.sug = ENG.suggest(S.store, S.ctx, CFG);
       // estado inicial = sugerencia
       S.folder = S.sug.folder;

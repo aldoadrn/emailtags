@@ -16,6 +16,10 @@
     // Se quita sola en ≤ 2 min. No la uses para otra cosa.
     marker: "ET-Pendiente",
 
+    // Categorías que empiezan con este prefijo son "etiquetas de mover"
+    // (para usar desde Outlook móvil). El panel no las muestra.
+    moveTagPrefix: "@",
+
     // Dominios propios: se ignoran como señal (todos te escriben desde hitss.com)
     ownDomains: ["hitss.com"],
 
